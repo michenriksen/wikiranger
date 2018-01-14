@@ -1,0 +1,142 @@
+#!/usr/bin/env ruby
+
+require "wikiranger"
+
+options = {
+  :csv          => nil,
+  :threads      => 5,
+  :top          => 10,
+  :api_base_url => Wikiranger::Wikipedia::DEFAULT_API_BASE_URI
+}
+
+begin
+  OptionParser.new do |opts|
+    opts.banner = "Usage: #{$0} [options] cidr [cidr2] ... [cidrN]"
+
+    opts.on("--csv DESTINATION", "Write Wiki contribution data to CSV file") do |v|
+      if File.exists?(v)
+        puts "ERROR: File #{v} does already exist".red
+        exit 1
+      end
+      options[:csv] = v
+    end
+
+    opts.on("-t", "--threads THREADS", "Amount of threads to use (default: #{options[:threads]})") do |v|
+      v = v.to_i
+      v = 1 if v <= 0
+      options[:threads] = v
+    end
+
+    opts.on("--top NUMBER", "Number to show from top lists (default: #{options[:top]})") do |v|
+      v = v.to_i
+      v = options[:top] if v <= 0
+      options[:top] = v
+    end
+
+    opts.on("--api-base-url URL", "Set base URL for Wiki API calls (default: #{options[:api_base_url]})") do |v|
+      options[:api_base_url] = v
+    end
+
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+
+    opts.on_tail("--version", "Show version") do
+      puts Wikiranger::VERSION
+      exit
+    end
+  end.parse!
+rescue OptionParser::InvalidOption => e
+  puts "ERROR: #{e.message}".red
+  puts "See -h or --help for usage"
+  exit 1
+end
+
+if ARGV.empty?
+  puts "ERROR: No CIDR ranges given".red
+  puts "See -h or --help for usage"
+  exit 1
+end
+
+puts "#{Wikiranger::BANNER}".bold
+
+hosts = []
+ARGV.each do |cidr|
+  hosts += Wikiranger::Util.expand_cidr(cidr)
+end
+hosts.uniq!
+
+contributions = []
+pool          = Wikiranger::ThreadPool.new(options[:threads])
+mutex         = Mutex.new
+wiki          = Wikiranger::Wikipedia.new(:api_base_uri => options[:api_base_url])
+progress      = ProgressBar.create(
+  :title  => "[+] Gathering Wiki contributions for #{hosts.count} hosts",
+  :total  => hosts.count,
+  :format => "%t: |%B| %p%%"
+)
+
+hosts.each do |host|
+  pool.schedule do
+    begin
+      contribs = wiki.user_contributions(host)
+      mutex.synchronize { contributions += contribs }
+      progress.increment
+    rescue => e
+      progress.log("[-] ERROR: #{e.class}: #{e.message}")
+    end
+  end
+end
+
+pool.shutdown
+puts "[+] Gathered #{contributions.count} Wiki contributions"
+
+if contributions.count.zero?
+  puts "[+] Nothing more to do"
+  exit
+end
+
+if options[:csv]
+  CSV.open(options[:csv], "wb") do |csv|
+    csv << ["user", "page_id", "rev_id", "parent_id", "title", "timestamp", "comment", "size"]
+    contributions.each do |contribution|
+      csv << contribution.to_csv_array
+    end
+  end
+  puts "[+] Wrote Wiki contribution data to #{options[:csv].bold}"
+end
+
+top_contributors = {}
+top_pages        = {}
+
+contributions.each do |contribution|
+  if !top_contributors.key?(contribution.user)
+    top_contributors[contribution.user] = [1, contribution.timestamp_object]
+  else
+    contribution_count, timestamp = top_contributors[contribution.user]
+    timestamp = contribution.timestamp_object if contribution.timestamp_object > timestamp
+    top_contributors[contribution.user] = [contribution_count + 1, timestamp]
+  end
+
+  if !top_pages.key?(contribution.pageid)
+    top_pages[contribution.pageid] = [contribution.size, contribution.title]
+  else
+    contribution_bytes, title = top_pages[contribution.pageid]
+    top_pages[contribution.pageid] = [contribution_bytes + contribution.size, title]
+  end
+end
+
+puts "\nTOP #{options[:top]} CONTRIBUTORS:".bold
+top_contributors.sort_by { |k, v| v.first }.reverse.take(options[:top]).each do |contributor|
+  user = contributor.first
+  contributions, latest = contributor.last
+  puts "#{user.bold}: #{contributions} contributions (latest: #{latest.strftime('%a, %d %b %Y %H:%M:%S %z')})"
+end
+
+puts "\nTOP #{options[:top]} MOST EDITED PAGES:".bold
+top_pages.sort_by { |k, v| v.first }.reverse.take(options[:top]).each do |page|
+  page_id = page.first
+  contribution_bytes, title = page.last
+  puts "#{title.bold}: #{Wikiranger::Util.number_to_human_size(contribution_bytes)} (https://en.wikipedia.org/?curid=#{page_id})"
+end

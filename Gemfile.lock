@@ -1,0 +1,26 @@
+PATH
+  remote: .
+  specs:
+    wikiranger (0.1.0)
+      colorize (~> 0.8.1)
+      ruby-progressbar (~> 1.9)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    colorize (0.8.1)
+    minitest (5.10.3)
+    rake (10.5.0)
+    ruby-progressbar (1.9.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler (~> 1.16)
+  minitest (~> 5.0)
+  rake (~> 10.0)
+  wikiranger!
+
+BUNDLED WITH
+   1.16.0
