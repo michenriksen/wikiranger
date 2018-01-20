@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wikiranger HTML Report</title>
+    <style type="text/css">
+      /*! normalize.css v7.0.0 | MIT License | github.com/necolas/normalize.css */html{line-height:1.15;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}article,aside,footer,header,nav,section{display:block}h1{font-size:2em;margin:.67em 0}figcaption,figure,main{display:block}figure{margin:1em 40px}hr{box-sizing:content-box;height:0;overflow:visible}pre{font-family:monospace,monospace;font-size:1em}a{background-color:transparent;-webkit-text-decoration-skip:objects}abbr[title]{border-bottom:0;text-decoration:underline;text-decoration:underline dotted}b,strong{font-weight:inherit}b,strong{font-weight:bolder}code,kbd,samp{font-family:monospace,monospace;font-size:1em}dfn{font-style:italic}mark{background-color:#ff0;color:#000}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-0.25em}sup{top:-0.5em}audio,video{display:inline-block}audio:not([controls]){display:none;height:0}img{border-style:none}svg:not(:root){overflow:hidden}button,input,optgroup,select,textarea{font-family:sans-serif;font-size:100%;line-height:1.15;margin:0}button,input{overflow:visible}button,select{text-transform:none}button,html [type="button"],[type="reset"],[type="submit"]{-webkit-appearance:button}button::-moz-focus-inner,[type="button"]::-moz-focus-inner,[type="reset"]::-moz-focus-inner,[type="submit"]::-moz-focus-inner{border-style:none;padding:0}button:-moz-focusring,[type="button"]:-moz-focusring,[type="reset"]:-moz-focusring,[type="submit"]:-moz-focusring{outline:1px dotted ButtonText}fieldset{padding:.35em .75em .625em}legend{box-sizing:border-box;color:inherit;display:table;max-width:100%;padding:0;white-space:normal}progress{display:inline-block;vertical-align:baseline}textarea{overflow:auto}[type="checkbox"],[type="radio"]{box-sizing:border-box;padding:0}[type="number"]::-webkit-inner-spin-button,[type="number"]::-webkit-outer-spin-button{height:auto}[type="search"]{-webkit-appearance:textfield;outline-offset:-2px}[type="search"]::-webkit-search-cancel-button,[type="search"]::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}details,menu{display:block}summary{display:list-item}canvas{display:inline-block}template{display:none}[hidden]{display:none}
+
+      body {
+        font-family: Atlas Grotesk Web,helvetica neue,helvetica,arial,sans-serif;
+        color: #494a4b;
+        background-color: #f5f5f5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-y: scroll;
+        padding-bottom: 50px;
+      }
+
+      h1,h2,h3,h4,h5,h6 {
+        color: #494a4b;
+        font-weight: 400;
+      }
+
+      p {
+        margin:0 0 1em 0;
+        line-height:1.5;
+        font-size:17px;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: underline;
+      }
+
+      a:hover {
+        color: #000;
+      }
+
+      .content {
+        padding: 0px 20px 0px 20px;
+      }
+
+      .logo {
+        background-color: #2a2730;
+        color: #99979c;
+        margin: 0px 0px 50px 0px;
+        font-weight: bold;
+      }
+
+      .logo a {
+        color: #99979c;
+      }
+
+      .logo weak {
+        font-weight: normal;
+      }
+
+      table#contributions th {
+        text-align: left;
+      }
+
+      table#contributions tbody tr:hover {
+        background-color: #eaeaea;
+      }
+
+      .col-time {
+        width: 150px;
+      }
+
+      .diff-remove {
+        color: #dc2e16;
+      }
+
+      .diff-add {
+        color: #00af88;
+      }
+    </style>
+  </head>
+  <body>
+<pre class="logo">
+<div class="content">
+       _ _   _
+ _ _ _|_| |_|_|___ ___ ___ ___ ___ ___
+| | | | | '_| |  _| .'|   | . | -_|  _|
+|_____|_|_,_|_|_| |__,|_|_|_  |___|_| v<%= Wikiranger::VERSION %>
+         <weak>by <a href="https://twitter.com/michenriksen" target="_blank">@michenriksen</a></weak> |___|
+
+</div>
+</pre>
+    <div class="content">
+      <table cellspacing="0" id="contributions" class="contribution-table">
+        <thead>
+          <tr>
+            <th class="col-time">Time</th>
+            <th>Change</th>
+            <th>Contributor</th>
+            <th>Page</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @contributions.each do |contribution| %>
+            <tr data-user="<%=h contribution.user %>" data-page-id="<%=h contribution.pageid %>">
+              <td><%=h contribution.timestamp_object.strftime("%b %e %Y, %H:%M") %></td>
+              <td class="<%= contribution.sizediff < 0 ? 'diff-remove' : 'diff-add' %>"><%=h contribution.sizediff%></td>
+              <td><a href="<%= contributor_url(contribution) %>" target="_blank"><%=h contribution.user %></a></td>
+              <td><a href="<%= page_url(contribution) %>" target="_blank"><%=h contribution.title %></a></td>
+              <td><a href="<%= contribution_url(contribution) %>" target="_blank"><%=h contribution.comment.empty? ? 'no edit summary' : contribution.comment %></a></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

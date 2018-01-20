@@ -4,6 +4,7 @@ require "wikiranger"
 
 options = {
   :csv          => nil,
+  :html         => nil,
   :threads      => 5,
   :top          => 10,
   :api_base_url => Wikiranger::Wikipedia::DEFAULT_API_BASE_URI
@@ -12,6 +13,14 @@ options = {
 begin
   OptionParser.new do |opts|
     opts.banner = "Usage: #{$0} [options] cidr [cidr2] ... [cidrN]"
+
+    opts.on("--html DESTINATION", "Write Wiki contribution HTML report file") do |v|
+      if File.exists?(v)
+        puts "ERROR: File #{v} does already exist".red
+        exit 1
+      end
+      options[:html] = v
+    end
 
     opts.on("--csv DESTINATION", "Write Wiki contribution data to CSV file") do |v|
       if File.exists?(v)
@@ -95,6 +104,12 @@ puts "[+] Gathered #{contributions.count} Wiki contributions"
 if contributions.count.zero?
   puts "[+] Nothing more to do"
   exit
+end
+
+if options[:html]
+  report = Wikiranger::Report.new(contributions)
+  report.generate(options[:html])
+  puts "[+] Wrote Wiki contribution HTML report to #{options[:html].bold}"
 end
 
 if options[:csv]
