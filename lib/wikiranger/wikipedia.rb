@@ -12,7 +12,7 @@ module Wikiranger
     end
 
     def user_contributions(user)
-      uri      = "#{api_base_uri}/w/api.php?action=query&format=json&list=usercontribs&uclimit=max&ucuser=#{URI.escape(user)}&ucdir=older"
+      uri      = "#{api_base_uri}/w/api.php?action=query&format=json&list=usercontribs&uclimit=max&ucuser=#{URI.escape(user)}&ucdir=older&ucprop=&ucprop=ids|title|timestamp|comment|size|sizediff"
       response = request(uri)
       if response.code.to_i != 200
         unexpected_response!("Unexpected response code: #{response.code} when retrieving user contributions for #{user}")

@@ -99,7 +99,7 @@ end
 
 if options[:csv]
   CSV.open(options[:csv], "wb") do |csv|
-    csv << ["user", "page_id", "rev_id", "parent_id", "title", "timestamp", "comment", "size"]
+    csv << ["user", "page_id", "rev_id", "parent_id", "title", "timestamp", "comment", "size", "size_diff"]
     contributions.each do |contribution|
       csv << contribution.to_csv_array
     end
@@ -120,10 +120,10 @@ contributions.each do |contribution|
   end
 
   if !top_pages.key?(contribution.pageid)
-    top_pages[contribution.pageid] = [contribution.size, contribution.title]
+    top_pages[contribution.pageid] = [contribution.sizediff.abs, contribution.title]
   else
     contribution_bytes, title = top_pages[contribution.pageid]
-    top_pages[contribution.pageid] = [contribution_bytes + contribution.size, title]
+    top_pages[contribution.pageid] = [contribution_bytes + contribution.sizediff.abs, title]
   end
 end
 

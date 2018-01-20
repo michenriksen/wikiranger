@@ -13,7 +13,7 @@ module Wikiranger
       end
 
       def to_csv_array
-        [self.user, self.pageid, self.revid, self.parentid, self.title, self.timestamp, self.comment, self.size]
+        [self.user, self.pageid, self.revid, self.parentid, self.title, self.timestamp, self.comment, self.size, self.sizediff]
       end
     end
   end
