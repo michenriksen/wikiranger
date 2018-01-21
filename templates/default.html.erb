@@ -38,6 +38,20 @@
         color: #000;
       }
 
+      fieldset {
+        margin-bottom: 20px;
+      }
+
+      legend {
+        font-weight: bold;
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
       .content {
         padding: 0px 20px 0px 20px;
       }
@@ -90,6 +104,26 @@
 </div>
 </pre>
     <div class="content">
+      <fieldset>
+        <legend>Filtering options</legend>
+        <select id="select_contributor">
+          <option value="" selected="selected">From all contributors</option>
+          <% @contributors.each do |contributor| %>
+            <option value="<%=h contributor %>"><%=h contributor %> (<%=h @contribs_per_contributor[contributor] || '0' %>)</option>
+          <% end %>
+        </select>
+        <select id="select_page">
+          <option value="" selected="selected">From all pages</option>
+          <% @pages.each do |page| %>
+            <option value="<%=h page.first %>"><%=h page.last %> (<%=h @contribs_per_page[page.first] || '0' %>)</option>
+          <% end %>
+        </select>
+        <select id="select_changetype">
+          <option value="" selected="selected">Removals and additions</option>
+          <option value="removal">Removals</option>
+          <option value="addition">Additions</option>
+        </select>
+      </fieldset>
       <table cellspacing="0" id="contributions" class="contribution-table">
         <thead>
           <tr>
@@ -102,7 +136,7 @@
         </thead>
         <tbody>
           <% @contributions.each do |contribution| %>
-            <tr data-user="<%=h contribution.user %>" data-page-id="<%=h contribution.pageid %>">
+            <tr data-user="<%=h contribution.user %>" data-page-id="<%=h contribution.pageid %>" data-change-type="<%=h contribution.sizediff < 0 ? 'removal' : 'addition' %>">
               <td><%=h contribution.timestamp_object.strftime("%b %e %Y, %H:%M") %></td>
               <td class="<%= contribution.sizediff < 0 ? 'diff-remove' : 'diff-add' %>"><%=h contribution.sizediff%></td>
               <td><a href="<%= contributor_url(contribution) %>" target="_blank"><%=h contribution.user %></a></td>
@@ -113,5 +147,35 @@
         </tbody>
       </table>
     </div>
+    <script type="text/javascript">
+      function filterContributions() {
+        var contributor   = document.getElementById("select_contributor").value;
+        var page          = document.getElementById("select_page").value;
+        var changeType    = document.getElementById("select_changetype").value;
+        var contributions = document.querySelectorAll('#contributions tbody tr');
+
+        Array.prototype.forEach.call(contributions, function(el, i) {
+          el.classList.remove("hidden");
+          if (contributor !== "" && el.getAttribute("data-user") !== contributor ) {
+            el.classList.add("hidden");
+            return;
+          }
+
+          if (page !== "" && el.getAttribute("data-page-id") !== page) {
+            el.classList.add("hidden");
+            return;
+          }
+
+          if (changeType !== "" && el.getAttribute("data-change-type") !== changeType) {
+            el.classList.add("hidden");
+            return;
+          }
+        });
+      }
+
+      document.getElementById("select_contributor").addEventListener("change", filterContributions);
+      document.getElementById("select_page").addEventListener("change", filterContributions);
+      document.getElementById("select_changetype").addEventListener("change", filterContributions);
+    </script>
   </body>
 </html>
